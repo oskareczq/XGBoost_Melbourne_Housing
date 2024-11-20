@@ -1,0 +1,186 @@
+---
+title: "XGBoost - report"
+output:
+  pdf_document: default
+  html_document: default
+author: 
+- "Oskar Wiśniewski"
+- "Jan Zajączkowski"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **1. Introduction and use examples**
+
+## Brief Introduction to XGBoost
+
+XGBoost (eXtreme Gradient Boosting) is popular and one of the most efficient implementations of the gradient boosting trees algorithm. Gradient boosting is a supervised learning algorithm, which attempts to accurately predict a target variable by combining the estimates of a set of simple decision trees, also called *weak learners[**[1]**](#_ftn1)*.
+
+The model starts with a simple prediction (ex. average value for regression tasks). The training proceeds iteratively, adding new decision trees that predict the residuals or errors of prior trees that are then combined with previous trees to make the final prediction. The method is called gradient boosting because it uses a gradient descent algorithm to minimize the loss when adding new models.
+
+![](Flow-chart-of-XGBoost.png)
+
+*Working scheme of the XGBoost algorithm[[2]](#_ftn2)*
+
+## Use of the Method in Science and Practice
+
+Extreme gradient boosting is a method widely used for both classification and regression tasks. While deep neural networks are considered to be the best choice when dealing with large unstructured data like texts and images, the XGBoost algorithm is found to outperform other machine learning algorithms when working with relatively small and middle-sized tabular, structured data.
+
+Below is a list of examples of the use of the method in science and practice:
+
+**Predicting breast cancer stage using XGBoost[[3]](#_ftn3)**
+
+**Reference:** Baoshan Ma, Fanyu Meng, Ge Yan, Haowen Yan, Bingjie Chai, Fengju Song, Diagnostic classification of cancers using extreme gradient boosting algorithm and multi-omics data, Computers in Biology and Medicine, Volume 121, 2020, 103761.
+
+The researchers used the XGBoost algorithm to develop a predictive model for classifying early stage and late stage cancers. In the study, an XGBoost model was trained and compared to other popular machine learning methods using cancer data downloaded from The Cancer Genome Atlas. The experimental results showed that the XGBoost model achieved statistically significantly better or comparable predictive performance compared to the other methods. Moreover, the algorithm allows for getting insights about feature importance. It was found that DNA methylation data outperformed the other molecular data types in terms of accuracy and stability for discriminating between early and late stage cancers.
+
+**2. Environmental science and air quality prediction[[4]](#_ftn4)**
+
+**Reference:** Joharestani, M. Z., Cao, C., Ni, X., Bashir, B., & Talebiesfandarani, S. (2019). PM2.5 prediction based on random forest, XGBoost, and deep learning using multisource remote sensing data. Atmosphere, 10(7), 373.
+
+This study explored the use of three machine learning algorithms: random forest, XGBoost, and deep learning - to predict PM2.5 concentrations in the city of Tehran. The researchers collected data from various satellite, meteorological, and land use sources to build predictive models for PM2.5 levels. The XGBoost algorithm demonstrated the highest performance in the prediction task. Worth noting is also another feature of XGBoost which is its relative speed. The researchers highlighted very low time costs of training and prediction using the XGBoost model.
+
+**3. Large-scale model training at Uber[[5]](#_ftn5)**
+
+**Reference:** Uber Engineering Team. (2019). Productionizing Distributed XGBoost to Train Deep Tree Models with Large Data Sets at Uber. Uber Engineering Blog.
+
+This case study demonstrates the implementation of XGBoost in practice. The algorithm was trained on billions of records at Uber's machine learning platform, Michelangelo. The project team uses XGBoost for various applications including rider demand forecasting, fraud detection, food discovery and recommendation for Uber Eats, and improving the accuracy of estimated times of arrival (ETAs). As a result, significant improvements were achieved, particularly in ETA estimation, leading to enhanced user experience.
+
+# **2. Indication of Selected Libraries, Functions, and Parameters**
+
+## tidymodels
+
+*tidymodels* library is a unified ecosystem for modeling and machine learning in R, with a consistent interface across model types. It simplifies workflows for data splitting, model specification, hyperparameter tuning, and evaluation.
+
+### Key Functions and Parameters in tidymodels
+
+#### Data Splitting and Cross-Validation
+
+-   `initial_split()`, `training()`, and `testing()`:
+    -   **Purpose**: Splits data into training and testing sets for separate model training and evaluation.
+-   `vfold_cv()`:
+    -   **Purpose**: Sets up cross-validation for model validation across multiple folds, enhancing robustness and reducing overfitting risk.
+    -   `strata` **parameter** - When data has an uneven distribution in a target variable (e.g., if one price range is overrepresented), `strata` helps to balance these proportions within each fold.
+
+#### Workflow Creation and Hyperparameter Tuning
+
+-   `workflow()`:
+    -   **Purpose**: Combines preprocessing steps, model specifications, and tuning processes into a single pipeline.
+    -   **Benefit**: Simplifies testing different models by allowing easy engine changes to switch between machine learning methods without reconfiguring the entire workflow.
+-   `tune_grid()`:
+    -   **Purpose**: Tunes model hyperparameters using the chosen resampling method to optimize model performance.
+    -   **Parameters**:
+        -   `grid`: The hyperparameter grid for tuning.
+        -   `resamples`: Cross-validation resampling strategy, like `vfold_cv`.
+        -   `control`: Defines tuning control settings, such as `save_pred` to save predictions for later analysis.
+
+#### XGBoost Model Specification
+
+-   `boost_tree()`:
+    -   **Purpose**: Defines a gradient boosting model configuration within tidymodels.
+    -   **Parameters**:
+        -   `trees`: Sets the total number of trees in the ensemble (e.g., 1000).
+        -   `tree_depth`: Controls tree depth, balancing bias and variance in the model.
+        -   `min_n`: Minimum number of observations in a terminal node, preventing overfitting on sparse data.
+        -   `learn_rate`: Learning rate, scaling each tree’s contribution to balance accuracy with convergence speed.
+
+#### Grid Sampling for Hyperparameter Search
+
+-   `grid_latin_hypercube()`:
+    -   **Purpose**: Generates a hyperparameter grid using the Latin Hypercube sampling method, ensuring even coverage across the hyperparameter space.
+
+## dlookr
+
+*dlookr* library is a diagnostic tool for data quality and distribution checks. The `plot_na_pareto()` function displays a Pareto chart of missing values, showing the distribution and frequency of missingness.
+
+# **3. Data Set Characteristics**
+
+The Melbourne Housing Dataset provides a diverse set of features about property sales in Melbourne, featuring a mix of 20 variables (12 numeric, 8 categorical) that offer an in-depth basis for analyzing property price determinants. The dataset includes 13,580 observations with 271,600 total values, is free from duplicate entries, but has a significant amount of missing data, with 6,132 missing observations across three variables.
+
+## Overview of Key Variables
+
+### Location Attributes
+
+-   **Suburb** (Categorical): Name of the suburb, with 314 unique categories.
+-   **Distance** (Numeric - Continuous): Distance from the CBD in kilometers.
+-   **Latitude and Longitude** (Numeric - Continuous): Geographical coordinates for spatial analysis.
+
+### Property Details
+
+-   **Rooms** (Numeric - Integer): Number of rooms, indicating property size.
+-   **Bedroom2** (Numeric - Integer): Alternative source for bedroom count.
+-   **Bathroom** (Numeric - Integer): Number of bathrooms.
+-   **Car** (Numeric - Integer): Number of parking spaces.
+-   **Landsize** (Numeric - Continuous): Total land area in square meters.
+-   **BuildingArea** (Numeric - Continuous): Built-up area of the property.
+-   **Type** (Categorical): Property type (e.g., house, unit, townhouse).
+
+### Financial and Sales Information
+
+-   **Price** (Numeric - Continuous): Sale price in AUD, the target variable.
+-   **Date** (Date): Sale date for temporal analysis.
+-   **Method** (Categorical): Sales method (e.g., auction, private sale).
+-   **SellerG** (Categorical): Real estate agency handling the sale.
+-   **CouncilArea** (Categorical): Governing council of the area.
+
+### Other Attributes
+
+-   **Regionname** (Categorical): General region classification.
+-   **Propertycount** (Numeric - Integer): Number of properties in the suburb.
+-   **Postcode** (Numeric - Integer): Postal code.
+-   **YearBuilt** (Numeric - Integer): Year of construction.
+
+## Modelling - feature selection
+
+Only specific columns from the Melbourne Housing Dataset were selected to focus on variables that directly influence property value. We have selected: **Suburb, Rooms, Type, Method, SellerG, Distance, Bedroom2, Bathroom, Car, Landsize** and the target variable: **Price**.
+
+Including all available columns could introduce noise and dilute the model’s predictive power, especially with variables less relevant to pricing, such as detailed address information or council areas with minimal variation. By narrowing the selection to essential attributes related to location, property structure, and sales details, the model can better capture meaningful patterns in the data, enhancing performance and interpretability.
+
+# **4. Empirical Analysis**
+
+### Goal
+
+The goal of the empirical analysis is to predict prices of real estate in the Melbourne city area. In order to perform this regression task, the XGBoost algorithm will be used. The next stage would be to interpret the results and assess the effectiveness of the model.
+
+### Assumptions
+
+We make a few assumptions when performing the empirical analysis on the Melbourne Housing Market dataset. Firstly, we assume that the dataset is representative of the Melbourne real estate market. This assumption is necessary if we want to use our framework to predict prices in the offers that will appear in the future. Secondly, we suppose that the relationship between features and price is relatively stable over the time period covered by the data. Finally, we assume that the features we have chosen after performing explanatory analysis are relevant predictors of the real estate prices.
+
+### Results and Interpretations
+
+#### [The metrics]{.underline}
+
+We have chosen the best model based on the RMSE (Root Mean Squared Error) metric. The top performing model achieved RMSE = 338 556, MAE (Mean Absolute Error) = 213 658 and R^2^ = 0.743. This was achieved for the following combination of hyperparameters:
+
++---------------------------+--------------------------------------------+-------------------------------------------+----------------------------------------------+--------------------------------------------------+-------------------+
+| **tree_depth**\           | **min_n**\                                 | **loss_reduction\                         | **sample_size\                               | **mtry\                                          | **learn_rate\     |
+| (max. depth of each tree) | (min. number of observations in each leaf) | **(min. loss reduction to create a split) | **(fraction of data to sample for each tree) | **(number of predictors to sample at each split) | (**learning rate) |
++---------------------------+--------------------------------------------+-------------------------------------------+----------------------------------------------+--------------------------------------------------+-------------------+
+| 11                        | 4                                          | 1.24471e-06                               | 0.8111581                                    | 8                                                | 0.01749917        |
++---------------------------+--------------------------------------------+-------------------------------------------+----------------------------------------------+--------------------------------------------------+-------------------+
+
+#### [Feature importance]{.underline}
+
+![](images/clipboard-2191692370.png)
+
+The feature importance is calculated based on the frequency and quality of splits involving each feature. Frequency is the number of times a feature is used to split the data across all trees while quality accounts for the feature's contribution to reducing error when it is used for a split.
+
+As shown on the plot of variable importance, the most important feature is *Distance*. Its  importance of 0.09 means that *Distance* contributes 9% of the total importance across all features. This suggests that the distance to CBD (Central Business District) has a significant influence on the price of property. The second most important feature is *Typeu*. It represents the unit property type and means that the prices of units behave differently than the prices of properties in other building types. Another highly important feature is *Rooms*, encoding the number of rooms in an apartment. This seems to be self-explanatory as generally more rooms mean more square footage and bigger price of a property. The same applies also to variables *Bathroom* and *Bedroom2.*
+
+The next three variables with importance greater than 0.05 are *Landsize, Typeh* and *SellerGMarshall.* These features are also relevant but have less consistent impact across the data. In general, the variable importance metric is an important feature of the XGBoost algorithm. It is not as straightforward as parameter values in the linear regression method but still allows to get valuable insights into how the model operates.
+
+------------------------------------------------------------------------
+
+# Sources
+
+[[1]](#_ftnref1) <https://docs.aws.amazon.com/sagemaker/latest/dg/xgboost-HowItWorks.html>
+
+[[2]](#_ftnref2) Guo, Rui & Zhao, Zhiqian & Wang, Tao & Liu, Guangheng & Zhao, Jingyi & Gao, Dianrong. (2020). Degradation state recognition of piston pump based on ICEEMDAN and XGBoost. Applied Sciences. 10. 6593. 10.3390/app10186593.
+
+[[3]](#_ftnref3) <https://www.sciencedirect.com/science/article/abs/pii/S0010482520301360>
+
+[[4]](#_ftnref4)<https://www.researchgate.net/publication/337160728_PM25_Prediction_Based_on_Random_Forest_XGBoost_and_Deep_Learning_Using_Multisource_Remote_Sensing_Data_PM_25_Prediction_Based_on_Random_Forest_XGBoost_and_Deep_Learning_Using_Multisource_Remote_Sensin>
+
+[[5]](#_ftnref5) <https://www.uber.com/en-PL/blog/productionizing-distributed-xgboost/>
